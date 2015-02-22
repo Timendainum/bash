@@ -1,0 +1,88 @@
+#!/bin/bash
+
+type __git_ps1 > /dev/null 2>&1
+PS1_GIT_NOT_AVAILABLE=$?
+
+type svn_prompt > /dev/null 2>&1
+SVN_STATUS_NOT_AVAILABLE=$?
+
+function prompt_command {
+    local hostn=$(hostname -s)
+    local usern=$(whoami)
+    local time_24h=$(date "+%H:%M:%S")
+    local clock='\@'
+
+    # Space that user@host takes up
+    local prompt_len=$((${#usern}+${#hostn}+5))
+
+    # Add username@hostname to PS1
+    PS1="$Gray╔═ $BIGreen$usern@$hostn $Color_Off"
+
+    # Construct directory path string no more than 40 chars long
+    if [ ${#PWD} -gt 40 ];
+    then
+        local working_dir=${PWD:0:10}...${PWD:$((${#PWD}-30))};
+    else
+        local working_dir=$PWD
+    fi
+
+    # Calculate size with working dir
+    let new_prompt_len=${prompt_len}+${#working_dir}+3
+    if [ ${new_prompt_len} -lt ${COLUMNS} ];
+    then
+        let prompt_len=${new_prompt_len}
+        PS1="$PS1$BIBlue[$working_dir] "
+    fi
+
+    # Space that git_ps1 will take
+    if [ $PS1_GIT_NOT_AVAILABLE = 0 ];
+    then
+        local git_branch=$(__git_ps1 '(%s) ')
+        let new_prompt_len=${prompt_len}+${#git_branch}
+        if [ ${new_prompt_len} -lt ${COLUMNS} ];
+        then
+            let prompt_len=${new_prompt_len}
+            PS1="$PS1$IYellow$git_branch$Color_Off"
+        fi
+    fi
+
+    # Space that svn status will take
+    $svn_prompt
+    if [ $SVN_STATUS_NOT_AVAILABLE = 0 ];
+    then
+        local svn_status=$(svn_prompt)
+        let new_prompt_len=${prompt_len}+${#svn_status}
+        if [ ${new_prompt_len} -lt ${COLUMNS} ];
+        then
+            let prompt_len=${new_prompt_len}
+            PS1="$PS1$IYellow$svn_status$Color_Off"
+        fi
+    fi
+    
+    # create a $fill of all screen width with time and a space:
+    let new_prompt_len=${prompt_len}+10
+    if [ ${new_prompt_len} -lt ${COLUMNS} ];
+    then
+        # Leave room for clock
+        let fillsize=${COLUMNS}-${new_prompt_len}
+    else
+        let fillsize=${COLUMNS}-${prompt_len}-1
+        clock=""
+    fi
+    fill=""
+    while [ "$fillsize" -gt "0" ]
+    do
+        fill="═${fill}" # fill with underscores to work on
+        let fillsize=${fillsize}-1
+    done
+
+    # Add filler and clock to prompt and append '$' on next line
+    PS1="$PS1$Gray$fill $ICyan$clock\n\$ $Color_Off"
+
+    # Enable option to deactivate prompt
+    if [ $DEACTIVATE ]
+    then
+        PS1="$ICyan\$$Color_Off "
+    fi
+}
+PROMPT_COMMAND=prompt_command
