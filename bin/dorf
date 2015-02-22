@@ -1,0 +1,7 @@
+#/bin/bash
+sysctl -w kernel.yama.ptrace_scope=0
+echo "Starting dwarf fortress..."
+dwarffortress &
+echo "Starting dwarf therapist..."
+exec splintermind-attributes
+sysctl -w kernel.yama.ptrace_scope=1
