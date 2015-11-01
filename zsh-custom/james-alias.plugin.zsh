@@ -1,5 +1,4 @@
 # James" zsh aliases and functions
-echo "DUDE!"
 alias diff="colordiff"              # requires colordiff package
 alias grep="grep --color=auto"
 #alias more="less"
@@ -22,6 +21,4 @@ fi
 # --------------------------------------------------------
 # utility aliases
 alias x="xinit -- :0 -nolisten tcp vt$XDG_VTNR"
-alias music="ncmpcpp"
-alias f="xfe"
-echo "End dude!"
+alias f="xfe &"
